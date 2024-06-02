@@ -23,6 +23,7 @@ import typing as T
 from pathlib import Path
 
 from ... import arglist
+from ... import coredata
 from ... import mesonlib
 from ... import mlog
 from ...linkers.linkers import GnuLikeDynamicLinkerMixin, SolarisDynamicLinker, CompCertDynamicLinker
@@ -446,6 +447,14 @@ class CLikeCompiler(Compiler):
         # on MSVC compiler and linker flags must be separated by the "/link" argument
         # at this point, the '/link' argument may already be part of extra_args, otherwise, it is added here
         largs += [l for l in self.linker_to_compiler_args(la) if l != '/link']
+
+        # Add <lang>_winlibs, accounting for machine file
+        if mode is CompileCheckMode.LINK:
+            #ovr: T.Mapping[OptionKey, T.Union[str, int, bool, T.List[str]]]
+            #ovr = {k.evolve(machine=self.for_machine) if k.lang else k: v.printable_value()
+            #       for k, v in self.get_options().items()}
+            options = coredata.OptionsView(env.coredata.options, '')
+            largs += self.get_option_link_args(options)
 
         if self.linker_to_compiler_args([]) == ['/link']:
             if largs != [] and '/link' not in extra_args:
